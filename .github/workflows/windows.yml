@@ -1,0 +1,35 @@
+name: Windows tests and installer
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install JavaScript dependencies
+        run: npm install --no-audit --no-fund
+      - name: Build UI
+        run: npm run build
+      - name: Test UI helpers
+        run: npm test
+      - name: Generate SCRIPTORIA red and black icons
+        run: npm run icons
+      - name: Test local database and imports
+        run: cargo test --manifest-path src-tauri/Cargo.toml
+      - name: Build Windows installer
+        run: npm run desktop:build
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: SCRIPTORIA-0.1.0-Windows-installer
+          path: src-tauri/target/release/bundle/nsis/*.exe
+          if-no-files-found: error
