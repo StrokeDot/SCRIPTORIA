@@ -127,7 +127,7 @@ fn store_bytes(&self,bytes:&[u8],ext:&str)->Result<(String,String),String>{
 fn add_thumbnail(&mut self,sid:&str,path:&str)->Result<Value,String>{
     self.script(sid)?;
     let bytes=Self::read_file(Path::new(path),12*1024*1024)?;
-    let mime=image_mime(&bytes).ok_or("Select a valid PNG, JPEG or WebP image")?;
+    let mime=Self::image_mime(&bytes).ok_or("Select a valid PNG, JPEG or WebP image")?;
     let ext=match mime{"image/png"=>"png","image/jpeg"=>"jpg",_=>"webp"};
     let (file,_)=self.store_bytes(&bytes,ext)?;
     let result=self.conn.execute("UPDATE scripts SET thumbnail_file=?,updated_at=?,version=version+1 WHERE id=?",
@@ -139,7 +139,7 @@ fn thumbnail(&self,sid:&str)->Result<Value,String>{
     let item=self.script(sid)?;
     if let Some(name)=item.thumbnail_file {
         let bytes=Self::read_file(&self.root.join("assets").join(&name),12*1024*1024)?;
-        let mime=image_mime(&bytes).ok_or("Stored thumbnail is not a supported image")?;
+        let mime=Self::image_mime(&bytes).ok_or("Stored thumbnail is not a supported image")?;
         Ok(json!({"data_url":format!("data:{mime};base64,{}",STANDARD.encode(bytes))}))
     }else{Ok(json!({"data_url":null}))}
 }
@@ -151,7 +151,7 @@ fn add_source(&mut self,sid:&str,path:&str)->Result<Value,String>{
         return Err("Supported references: PDF, DOCX, EPUB, TXT, Markdown, JSON, PNG, JPG and WebP".into())
     }
     let bytes=Self::read_file(source,50*1024*1024)?;
-    if ["png","jpg","jpeg","webp"].contains(&ext.as_str())&&image_mime(&bytes).is_none(){
+    if ["png","jpg","jpeg","webp"].contains(&ext.as_str())&&Self::image_mime(&bytes).is_none(){
         return Err("Reference image format is invalid".into())
     }
     let (stored,sha)=self.store_bytes(&bytes,&ext)?;
