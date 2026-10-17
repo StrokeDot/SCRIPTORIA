@@ -12,13 +12,13 @@ fn get<'a>(v:&'a Value,key:&str)->Result<&'a str,String> {
     v.get(key).and_then(Value::as_str).ok_or_else(||format!("Missing {key}"))
 }
 fn text(v:&Value,key:&str,max:usize)->Result<String,String>{
-    let s=v.get(key).and_then(Value::as_str).unwrap_or("").trim().to_string();
+    let s=v.get(key).and_then(Value::as_str).unwrap_or("").to_string();
     if s.len()>max {return Err(format!("{key} exceeds the size limit"))}
     Ok(s)
 }
 fn required(v:&Value,key:&str,max:usize)->Result<String,String>{
     let s=text(v,key,max)?;
-    if s.is_empty(){return Err(format!("{key} is required"))}
+    if s.trim().is_empty(){return Err(format!("{key} is required"))}
     Ok(s)
 }
 fn sqlerr(e:rusqlite::Error)->String {format!("Local database error: {e}")}
